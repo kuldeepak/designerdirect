@@ -110,7 +110,7 @@
 //         input: [{
 //           filename: file.name,
 //           mimeType: file.type || "application/octet-stream",
-//           fileSize: file.size.toString(),  // ✅ must be string
+//           fileSize: file.size.toString(),  //must be string
 //           resource: "FILE",
 //           httpMethod: "POST"
 //         }]
