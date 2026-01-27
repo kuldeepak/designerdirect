@@ -2,7 +2,7 @@
 
 client_id = "5aaded2899d449156c5deb413cb205f3"
 name = "form-app-testttt"
-application_url = "https://towers-marvel-cdna-researcher.trycloudflare.com/"
+application_url = "https://foto-bell-skin-stake.trycloudflare.com/"
 embedded = true
 
 [build]
@@ -29,6 +29,4 @@ prefix = "apps"
 subpath = "configurator"
 
 [auth]
-redirect_urls = [
-    "https://towers-marvel-cdna-researcher.trycloudflare.com/api/auth",
-]
+redirect_urls = ["https://foto-bell-skin-stake.trycloudflare.com/api/auth"]
