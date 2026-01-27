@@ -2,7 +2,7 @@
 
 client_id = "5aaded2899d449156c5deb413cb205f3"
 name = "form-app-testttt"
-application_url = "https://click-various-van-sides.trycloudflare.com/"
+application_url = "https://clone-engaged-belly-pointed.trycloudflare.com/"
 embedded = true
 
 [build]
@@ -29,4 +29,6 @@ prefix = "apps"
 subpath = "configurator"
 
 [auth]
-redirect_urls = ["https://click-various-van-sides.trycloudflare.com/api/auth"]
+redirect_urls = [
+    "https://clone-engaged-belly-pointed.trycloudflare.com/api/auth",
+]
