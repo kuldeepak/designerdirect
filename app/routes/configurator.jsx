@@ -110,7 +110,7 @@
 //         input: [{
 //           filename: file.name,
 //           mimeType: file.type || "application/octet-stream",
-//           fileSize: file.size.toString(),  //must be string
+//           fileSize: file.size.toString(),  // ✅ must be string
 //           resource: "FILE",
 //           httpMethod: "POST"
 //         }]
@@ -232,18 +232,24 @@
 //   }
 // }
 
+
+
+
+
+import { authenticate } from "../shopify.server";
+
 export async function action({ request }) {
   try {
+    const { admin } = await authenticate.admin(request);
+
     // =======================
     // 1. Read form data
     // =======================
     const formData = await request.formData();
-
     const brandName = formData.get("brand_name");
     const bio = formData.get("bio");
     const category = formData.get("category");
     const phone = formData.get("phone");
-
     const lookbookFile = formData.get("lookbook_file");
     const linesheetPdf = formData.get("linesheet_pdf");
 
@@ -255,21 +261,11 @@ export async function action({ request }) {
     // 2. Shopify GraphQL helper
     // =======================
     async function shopifyGraphQL(query, variables) {
-      const res = await fetch(
-        `https://${process.env.SHOPIFY_SHOP_URL}/admin/api/2023-10/graphql.json`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN
-          },
-          body: JSON.stringify({ query, variables })
-        }
-      );
+      const response = await admin.graphql(query, { variables });
+      const json = await response.json();
 
-      const json = await res.json();
-      if (!res.ok || json.errors) {
-        throw new Error(JSON.stringify(json.errors || res.statusText));
+      if (!response.ok || json.errors) {
+        throw new Error(JSON.stringify(json.errors || response.statusText));
       }
       return json.data;
     }
@@ -285,7 +281,6 @@ export async function action({ request }) {
           }
         }
       `;
-
       const data = await shopifyGraphQL(checkQuery);
       const exists = data.metaobjectDefinitions.nodes.some(
         d => d.type === "brand_configurator"
@@ -327,23 +322,23 @@ export async function action({ request }) {
     // =======================
     async function stagedUpload(file) {
       const query = `
-    mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
-      stagedUploadsCreate(input: $input) {
-        stagedTargets {
-          url
-          resourceUrl
-          parameters { name value }
+        mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
+          stagedUploadsCreate(input: $input) {
+            stagedTargets {
+              url
+              resourceUrl
+              parameters { name value }
+            }
+            userErrors { message }
+          }
         }
-        userErrors { message }
-      }
-    }
-  `;
+      `;
 
       const data = await shopifyGraphQL(query, {
         input: [{
           filename: file.name,
           mimeType: file.type || "application/octet-stream",
-          fileSize: file.size.toString(),  // ✅ must be string
+          fileSize: file.size.toString(),
           resource: "FILE",
           httpMethod: "POST"
         }]
@@ -356,28 +351,20 @@ export async function action({ request }) {
       return data.stagedUploadsCreate.stagedTargets[0];
     }
 
-
     async function uploadToS3(target, file) {
       const s3Form = new FormData();
-
       for (const param of target.parameters) {
         s3Form.append(param.name, param.value);
       }
-
       s3Form.append("file", file);
 
-      const res = await fetch(target.url, {
-        method: "POST",
-        body: s3Form
-      });
-
+      const res = await fetch(target.url, { method: "POST", body: s3Form });
       if (!res.ok) {
-        const text = await res.text(); // 👈 important
+        const text = await res.text();
         console.error("S3 ERROR RESPONSE:", text);
         throw new Error("S3 upload failed");
       }
     }
-
 
     async function createShopifyFile(resourceUrl) {
       const query = `
@@ -388,11 +375,9 @@ export async function action({ request }) {
           }
         }
       `;
-
       const data = await shopifyGraphQL(query, {
         files: [{ originalSource: resourceUrl }]
       });
-
       return data.fileCreate.files[0].id;
     }
 
@@ -417,7 +402,6 @@ export async function action({ request }) {
     // 6. Create metaobject
     // =======================
     const handle = `${brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
-
     const fields = [
       { key: "brand_name", value: brandName },
       { key: "bio", value: bio || "" },
@@ -425,19 +409,12 @@ export async function action({ request }) {
       { key: "phone", value: phone || "" }
     ];
 
-    if (lookbookFileId) {
-      fields.push({ key: "lookbook_file", value: lookbookFileId });
-    }
-
-    if (linesheetFileId) {
-      fields.push({ key: "linesheet_pdf", value: linesheetFileId });
-    }
+    if (lookbookFileId) fields.push({ key: "lookbook_file", value: lookbookFileId });
+    if (linesheetFileId) fields.push({ key: "linesheet_pdf", value: linesheetFileId });
 
     const metaobjectMutation = `
       mutation CreateMetaobject($handle: String!, $type: String!, $fields: [MetaobjectFieldInput!]!) {
-        metaobjectCreate(
-          metaobject: { handle: $handle, type: $type, fields: $fields }
-        ) {
+        metaobjectCreate(metaobject: { handle: $handle, type: $type, fields: $fields }) {
           metaobject { id }
           userErrors { message }
         }
