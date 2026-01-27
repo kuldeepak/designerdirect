@@ -234,15 +234,20 @@
 
 
 
-
 import { authenticate } from "../shopify.server";
+import { json } from "@remix-run/node";
 
 export const action = async ({ request }) => {
   try {
-    // 1️⃣ Ensure admin session
+    // =======================
+    // 1. Admin authentication
+    // =======================
     const { admin } = await authenticate.admin(request);
+    if (!admin) throw new Error("Admin authentication failed");
 
-    // 2️⃣ Read form data
+    // =======================
+    // 2. Read form data
+    // =======================
     const formData = await request.formData();
     const brandName = formData.get("brand_name");
     const bio = formData.get("bio");
@@ -251,21 +256,26 @@ export const action = async ({ request }) => {
     const lookbookFile = formData.get("lookbook_file");
     const linesheetPdf = formData.get("linesheet_pdf");
 
-    if (!brandName) {
-      return { success: false, error: "Brand name is required" };
-    }
+    if (!brandName) return json({ success: false, error: "Brand name is required" });
 
-    // 3️⃣ Shopify GraphQL helper using authenticated admin
+    // =======================
+    // 3. GraphQL helper using Admin object
+    // =======================
     async function shopifyGraphQL(query, variables) {
       const response = await admin.graphql(query, { variables });
-      const json = await response.json();
-      if (!response.ok || json.errors) {
-        throw new Error(JSON.stringify(json.errors || response.statusText));
+      const data = await response.json();
+
+      if (!response.ok || data.errors?.length) {
+        console.error("GraphQL Error:", data.errors || response.statusText);
+        throw new Error(data.errors?.map(e => e.message).join(", ") || response.statusText);
       }
-      return json.data;
+
+      return data.data;
     }
 
-    // 4️⃣ Ensure metaobject definition exists
+    // =======================
+    // 4. Ensure metaobject definition exists
+    // =======================
     async function ensureMetaobjectDefinition() {
       const checkQuery = `
         query {
@@ -274,10 +284,12 @@ export const action = async ({ request }) => {
           }
         }
       `;
+
       const data = await shopifyGraphQL(checkQuery);
       const exists = data.metaobjectDefinitions.nodes.some(
         (d) => d.type === "brand_configurator"
       );
+
       if (exists) return;
 
       const createMutation = `
@@ -287,6 +299,7 @@ export const action = async ({ request }) => {
           }
         }
       `;
+
       const definition = {
         name: "Brand Configurator",
         type: "brand_configurator",
@@ -302,22 +315,29 @@ export const action = async ({ request }) => {
 
       const res = await shopifyGraphQL(createMutation, { definition });
       if (res.metaobjectDefinitionCreate.userErrors.length) {
-        throw new Error("Metaobject definition creation failed");
+        throw new Error(res.metaobjectDefinitionCreate.userErrors.map(e => e.message).join(", "));
       }
     }
 
     await ensureMetaobjectDefinition();
 
-    // 5️⃣ File upload helpers
+    // =======================
+    // 5. File upload helpers
+    // =======================
     async function stagedUpload(file) {
       const query = `
         mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
           stagedUploadsCreate(input: $input) {
-            stagedTargets { url resourceUrl parameters { name value } }
+            stagedTargets {
+              url
+              resourceUrl
+              parameters { name value }
+            }
             userErrors { message }
           }
         }
       `;
+
       const data = await shopifyGraphQL(query, {
         input: [{
           filename: file.name,
@@ -337,13 +357,13 @@ export const action = async ({ request }) => {
 
     async function uploadToS3(target, file) {
       const s3Form = new FormData();
-      for (const param of target.parameters) s3Form.append(param.name, param.value);
+      target.parameters.forEach(param => s3Form.append(param.name, param.value));
       s3Form.append("file", file);
 
       const res = await fetch(target.url, { method: "POST", body: s3Form });
       if (!res.ok) {
         const text = await res.text();
-        console.error("S3 ERROR RESPONSE:", text);
+        console.error("S3 upload failed:", text);
         throw new Error("S3 upload failed");
       }
     }
@@ -357,11 +377,14 @@ export const action = async ({ request }) => {
           }
         }
       `;
+
       const data = await shopifyGraphQL(query, { files: [{ originalSource: resourceUrl }] });
-      return data.fileCreate.files[0].id;
+      return data.fileCreate.files[0]?.id || null;
     }
 
-    // 6️⃣ Upload files
+    // =======================
+    // 6. Upload files
+    // =======================
     let lookbookFileId = null;
     if (lookbookFile && lookbookFile.size > 0) {
       const target = await stagedUpload(lookbookFile);
@@ -376,7 +399,9 @@ export const action = async ({ request }) => {
       linesheetFileId = await createShopifyFile(target.resourceUrl);
     }
 
-    // 7️⃣ Create metaobject
+    // =======================
+    // 7. Create metaobject
+    // =======================
     const handle = `${brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
     const fields = [
       { key: "brand_name", value: brandName },
@@ -396,14 +421,20 @@ export const action = async ({ request }) => {
         }
       }
     `;
+
     const metaobjectData = await shopifyGraphQL(metaobjectMutation, { handle, type: "brand_configurator", fields });
+
     if (metaobjectData.metaobjectCreate.userErrors.length) {
-      throw new Error("Metaobject creation failed");
+      throw new Error(metaobjectData.metaobjectCreate.userErrors.map(e => e.message).join(", "));
     }
 
-    return { success: true, metaobjectId: metaobjectData.metaobjectCreate.metaobject.id };
+    // =======================
+    // 8. Return JSON response
+    // =======================
+    return json({ success: true, metaobjectId: metaobjectData.metaobjectCreate.metaobject.id });
+
   } catch (error) {
-    console.error("Shopify action error:", error);
-    return { success: false, error: error.message };
+    console.error("Action error:", error);
+    return json({ success: false, error: error.message });
   }
 };
