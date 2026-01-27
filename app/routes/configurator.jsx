@@ -254,40 +254,23 @@ export async function action({ request }) {
     // =======================
     // 2. Shopify GraphQL helper
     // =======================
-    // async function shopifyGraphQL(query, variables) {
-    //   const res = await fetch(
-    //     `https://${process.env.SHOPIFY_SHOP_URL}/admin/api/2023-10/graphql.json`,
-    //     {
-    //       method: "POST",
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //         "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN
-    //       },
-    //       body: JSON.stringify({ query, variables })
-    //     }
-    //   );
-
-    //   const json = await res.json();
-    //   if (!res.ok || json.errors) {
-    //     throw new Error(JSON.stringify(json.errors || res.statusText));
-    //   }
-    //   return json.data;
-    // }
-    async function shopifyGraphQL(query, variables, shop, accessToken) {
-      const res = await fetch(`https://${shop}/admin/api/2023-10/graphql.json`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Access-Token": accessToken
-        },
-        body: JSON.stringify({ query, variables })
-      });
+    async function shopifyGraphQL(query, variables) {
+      const res = await fetch(
+        `https://${process.env.SHOPIFY_SHOP_URL}/admin/api/2023-10/graphql.json`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN
+          },
+          body: JSON.stringify({ query, variables })
+        }
+      );
 
       const json = await res.json();
       if (!res.ok || json.errors) {
         throw new Error(JSON.stringify(json.errors || res.statusText));
       }
-
       return json.data;
     }
 
