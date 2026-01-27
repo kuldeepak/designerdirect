@@ -92,7 +92,7 @@ export default function Index() {
   return (
     <s-page heading="Shopify app template">
       <s-button slot="primary-action" onClick={generateProduct}>
-        Generate a product
+        Generate a product...test
       </s-button>
 
       <s-section heading="Congrats on creating a new Shopify app 🎉">
