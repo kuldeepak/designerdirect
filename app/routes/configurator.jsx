@@ -235,16 +235,14 @@
 
 
 
-
 import { authenticate } from "../shopify.server";
 
-export async function action({ request }) {
+export const action = async ({ request }) => {
   try {
+    // 1️⃣ Ensure admin session
     const { admin } = await authenticate.admin(request);
 
-    // =======================
-    // 1. Read form data
-    // =======================
+    // 2️⃣ Read form data
     const formData = await request.formData();
     const brandName = formData.get("brand_name");
     const bio = formData.get("bio");
@@ -257,22 +255,17 @@ export async function action({ request }) {
       return { success: false, error: "Brand name is required" };
     }
 
-    // =======================
-    // 2. Shopify GraphQL helper
-    // =======================
+    // 3️⃣ Shopify GraphQL helper using authenticated admin
     async function shopifyGraphQL(query, variables) {
       const response = await admin.graphql(query, { variables });
       const json = await response.json();
-
       if (!response.ok || json.errors) {
         throw new Error(JSON.stringify(json.errors || response.statusText));
       }
       return json.data;
     }
 
-    // =======================
-    // 3. Ensure metaobject definition
-    // =======================
+    // 4️⃣ Ensure metaobject definition exists
     async function ensureMetaobjectDefinition() {
       const checkQuery = `
         query {
@@ -283,9 +276,8 @@ export async function action({ request }) {
       `;
       const data = await shopifyGraphQL(checkQuery);
       const exists = data.metaobjectDefinitions.nodes.some(
-        d => d.type === "brand_configurator"
+        (d) => d.type === "brand_configurator"
       );
-
       if (exists) return;
 
       const createMutation = `
@@ -295,7 +287,6 @@ export async function action({ request }) {
           }
         }
       `;
-
       const definition = {
         name: "Brand Configurator",
         type: "brand_configurator",
@@ -317,23 +308,16 @@ export async function action({ request }) {
 
     await ensureMetaobjectDefinition();
 
-    // =======================
-    // 4. File upload helpers
-    // =======================
+    // 5️⃣ File upload helpers
     async function stagedUpload(file) {
       const query = `
         mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
           stagedUploadsCreate(input: $input) {
-            stagedTargets {
-              url
-              resourceUrl
-              parameters { name value }
-            }
+            stagedTargets { url resourceUrl parameters { name value } }
             userErrors { message }
           }
         }
       `;
-
       const data = await shopifyGraphQL(query, {
         input: [{
           filename: file.name,
@@ -353,9 +337,7 @@ export async function action({ request }) {
 
     async function uploadToS3(target, file) {
       const s3Form = new FormData();
-      for (const param of target.parameters) {
-        s3Form.append(param.name, param.value);
-      }
+      for (const param of target.parameters) s3Form.append(param.name, param.value);
       s3Form.append("file", file);
 
       const res = await fetch(target.url, { method: "POST", body: s3Form });
@@ -375,15 +357,11 @@ export async function action({ request }) {
           }
         }
       `;
-      const data = await shopifyGraphQL(query, {
-        files: [{ originalSource: resourceUrl }]
-      });
+      const data = await shopifyGraphQL(query, { files: [{ originalSource: resourceUrl }] });
       return data.fileCreate.files[0].id;
     }
 
-    // =======================
-    // 5. Upload files
-    // =======================
+    // 6️⃣ Upload files
     let lookbookFileId = null;
     if (lookbookFile && lookbookFile.size > 0) {
       const target = await stagedUpload(lookbookFile);
@@ -398,9 +376,7 @@ export async function action({ request }) {
       linesheetFileId = await createShopifyFile(target.resourceUrl);
     }
 
-    // =======================
-    // 6. Create metaobject
-    // =======================
+    // 7️⃣ Create metaobject
     const handle = `${brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
     const fields = [
       { key: "brand_name", value: brandName },
@@ -420,24 +396,14 @@ export async function action({ request }) {
         }
       }
     `;
-
-    const metaobjectData = await shopifyGraphQL(metaobjectMutation, {
-      handle,
-      type: "brand_configurator",
-      fields
-    });
-
+    const metaobjectData = await shopifyGraphQL(metaobjectMutation, { handle, type: "brand_configurator", fields });
     if (metaobjectData.metaobjectCreate.userErrors.length) {
       throw new Error("Metaobject creation failed");
     }
 
-    return {
-      success: true,
-      metaobjectId: metaobjectData.metaobjectCreate.metaobject.id
-    };
-
+    return { success: true, metaobjectId: metaobjectData.metaobjectCreate.metaobject.id };
   } catch (error) {
-    console.error(error);
+    console.error("Shopify action error:", error);
     return { success: false, error: error.message };
   }
-}
+};
