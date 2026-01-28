@@ -2,7 +2,7 @@
 
 client_id = "5aaded2899d449156c5deb413cb205f3"
 name = "form-app-testttt"
-application_url = "https://workforce-mostly-dozen-thorough.trycloudflare.com/"
+application_url = "https://workshop-induction-mature-rugby.trycloudflare.com/"
 embedded = true
 
 [build]
@@ -30,5 +30,5 @@ subpath = "configurator"
 
 [auth]
 redirect_urls = [
-    "https://workforce-mostly-dozen-thorough.trycloudflare.com/api/auth",
+    "https://workshop-induction-mature-rugby.trycloudflare.com/api/auth",
 ]

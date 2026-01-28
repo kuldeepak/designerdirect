@@ -18,6 +18,8 @@
   action="/apps/configurator"
   enctype="multipart/form-data"
 >
+<div class="section-spacingg">
+  <div class="container container--xxs">
 <div class="fieldset_et ">
   <div class="form-control_et">
   <input type="text" name="brand_name" placeholder="Brand Name" required>
@@ -41,6 +43,8 @@
 </div></div>
 <div class="buttton_stn">
  <button class="button" type="submit">Submit1</button></div>
+ </div>
+ </div>
 </form>
 
 <style>
@@ -92,7 +96,9 @@
      padding: 10.4px 12.8px;
      margin-top: 16px;
 }
-
+.shopify-section--main-customers-account .section-header.text-start {
+  max-width: max-content;
+  }
 </style>
 
 
@@ -123,8 +129,6 @@
       }
 
       successBox.style.display = "block";
-      console.log(result);
-      alert(result);
       form.reset();
     } catch (error) {
       errorBox.textContent = error.message;
