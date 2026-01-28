@@ -2,7 +2,7 @@
 
 client_id = "5aaded2899d449156c5deb413cb205f3"
 name = "form-app-testttt"
-application_url = "https://becoming-combining-near-extract.trycloudflare.com/"
+application_url = "https://workforce-mostly-dozen-thorough.trycloudflare.com/"
 embedded = true
 
 [build]
@@ -21,7 +21,7 @@ uri = "/webhooks/app/scopes_update"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,write_app_proxy,write_metaobjects,read_metaobject_definitions ,write_metaobject_definitions"
+scopes = "write_products,write_app_proxy,write_metaobjects,read_metaobject_definitions,write_metaobject_definitions,write_files"
 
 [app_proxy]
 url = "/configurator"
@@ -30,5 +30,5 @@ subpath = "configurator"
 
 [auth]
 redirect_urls = [
-    "https://becoming-combining-near-extract.trycloudflare.com/api/auth",
+    "https://workforce-mostly-dozen-thorough.trycloudflare.com/api/auth",
 ]
