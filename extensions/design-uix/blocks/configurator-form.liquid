@@ -18,22 +18,29 @@
   action="/apps/configurator"
   enctype="multipart/form-data"
 >
+<div class="fieldset_et ">
+  <div class="form-control_et">
   <input type="text" name="brand_name" placeholder="Brand Name" required>
 <input type="hidden" name="shop_domain" value="kastesting.myshopify.com" />
-
-  <input type="text" name="bio" placeholder="Bio" required>
-
+</div>
+  <div class="form-control_et grid_frome">
+      <input type="text" name="bio" placeholder="Bio" required>
   <input type="text" name="category" placeholder="Category" required>
-
+</div>
+   <div class="form-control_et">
   <input type="text" name="phone" placeholder="Phone" required>
-
+</div>
+ 
+  <div class="form-control_filr">
  <label>Lookbook File1</label>
   <input type="file" name="lookbook_file" accept=".pdf,.jpg,.png" >
-
+</div>
+  <div class="form-control_filr">
   <label>Linesheet PDF1</label>
   <input type="file" name="linesheet_pdf" accept=".pdf" >
-
- <button type="submit">Submit1</button>
+</div></div>
+<div class="buttton_stn">
+ <button class="button" type="submit">Submit1</button></div>
 </form>
 
 <style>
@@ -52,6 +59,40 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+  .form-control_et input {
+     width: 100%;
+     border-radius: 0;
+     border: 1px solid #CECECE;
+     padding: 10.4px 12.8px;
+     background: transparent;
+}
+.fieldset_et {
+     display: grid;
+     gap: 16px;
+}
+.form-control_et.grid_frome {
+     display: grid;
+     gap: 16px;
+     grid-template-columns: 1fr 1fr;
+}
+.form-control_filr label {
+     display: block;
+     width: 100%;
+}
+.form-control_filr input {
+     width: 100%;
+     border-radius: 0;
+     border: 1px solid #CECECE;
+     padding: 10.4px 12.8px;
+}
+.buttton_stn button {
+     width: 100%;
+     border-radius: 0;
+     border: 1px solid #CECECE;
+     padding: 10.4px 12.8px;
+     margin-top: 16px;
+}
+
 </style>
 
 
