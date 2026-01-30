@@ -2,7 +2,7 @@
 
 client_id = "5aaded2899d449156c5deb413cb205f3"
 name = "form-app-testttt"
-application_url = "https://workshop-induction-mature-rugby.trycloudflare.com/"
+application_url = "https://relaxation-squad-took-cal.trycloudflare.com/"
 embedded = true
 
 [build]
@@ -28,7 +28,6 @@ url = "/configurator"
 prefix = "apps"
 subpath = "configurator"
 
+
 [auth]
-redirect_urls = [
-    "https://workshop-induction-mature-rugby.trycloudflare.com/api/auth",
-]
+redirect_urls = ["https://relaxation-squad-took-cal.trycloudflare.com/api/auth"]

@@ -6,10 +6,6 @@
   <p style="color: red;">{{ request.query.error }}</p>
 {% endif %}
 
-<div id="form-success" style="display:none; color:green;">
-  Form submitted successfully
-</div>
-
 <div id="form-error" style="display:none; color:red;"></div>
 
 <form
@@ -18,12 +14,14 @@
   action="/apps/configurator"
   enctype="multipart/form-data"
 >
+<h1 class="fill-designer-et">Please Fill the Designer Form.</h1>
 <div class="section-spacingg">
   <div class="container container--xxs">
 <div class="fieldset_et ">
   <div class="form-control_et">
   <input type="text" name="brand_name" placeholder="Brand Name" required>
 <input type="hidden" name="shop_domain" value="kastesting.myshopify.com" />
+
 </div>
   <div class="form-control_et grid_frome">
       <input type="text" name="bio" placeholder="Bio" required>
@@ -31,22 +29,34 @@
 </div>
    <div class="form-control_et">
   <input type="text" name="phone" placeholder="Phone" required>
+  </div>
+
+<div class="form-control_et">
+  <input type="text" name="contact_email" id="contact_email" placeholder="Contact email" required>
 </div>
- 
-  <div class="form-control_filr">
- <label>Lookbook File1</label>
+
+   <div class="form-control_filr">
+ <label>Profile image</label>
   <input type="file" name="lookbook_file" accept=".pdf,.jpg,.png" >
 </div>
   <div class="form-control_filr">
-  <label>Linesheet PDF1</label>
+  <label>Line sheet PDF</label>
   <input type="file" name="linesheet_pdf" accept=".pdf" >
 </div></div>
 <div class="buttton_stn">
- <button class="button" type="submit">Submit1</button></div>
+  <button class="button" type="submit" id="submitBtn">
+    <span class="btn-text">Submit</span>
+    <span class="loader" style="display:none;"></span>
+  </button>
+ 
+</div>
  </div>
  </div>
 </form>
 
+<div id="form-success" style="display:none; color:green;">
+  Form submitted successfully
+</div>
 <style>
   .loader {
     width: 16px;
@@ -101,6 +111,67 @@
   }
 </style>
 
+
+<script>
+  const form = document.getElementById("configuratorForm");
+  const submitBtn = document.getElementById("submitBtn");
+  const spinner = submitBtn.querySelector(".loader");
+  const successBox = document.getElementById("form-success");
+  const errorBox = document.getElementById("form-error");
+
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    spinner.style.display = "inline-block";
+    submitBtn.disabled = true;
+
+    successBox.style.display = "none";
+    errorBox.style.display = "none";
+
+    try {
+      const formData = new FormData(form);
+
+      const res = await fetch("/apps/configurator", {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || result.success === false) {
+        throw new Error(result.error || "Submission failed");
+      }
+
+      successBox.style.display = "block";
+      form.reset();
+
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.style.display = "block";
+
+    } finally {
+      // spinner OFF
+      spinner.style.display = "none";
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+
+
+
+<script>
+  // URL se email parameter nikaalne ke liye
+  const urlParams = new URLSearchParams(window.location.search);
+  const email = urlParams.get('email');
+
+  // Agar email mila to input me auto fill karo
+  if (email) {
+    const emailInput = document.getElementById('contact_email');
+    if (emailInput) {
+      emailInput.value = email;
+    }
+  }
+</script>
 
 
 <script>

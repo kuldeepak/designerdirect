@@ -11,6 +11,8 @@ export async function action({ request }) {
     const bio = formData.get("bio");
     const category = formData.get("category");
     const phone = formData.get("phone");
+    const email = formData.get("contact_email");
+
 
     const lookbookFile = formData.get("lookbook_file");
     const linesheetPdf = formData.get("linesheet_pdf");
@@ -84,6 +86,7 @@ export async function action({ request }) {
           { name: "Bio", key: "bio", type: "single_line_text_field" },
           { name: "Category", key: "category", type: "single_line_text_field" },
           { name: "Phone", key: "phone", type: "single_line_text_field" },
+          { name: "Contact email", key: "contact_email", type: "single_line_text_field" },
           { name: "Lookbook File", key: "lookbook_file", type: "file_reference" },
           { name: "Linesheet PDF", key: "linesheet_pdf", type: "file_reference" }
         ]
@@ -199,7 +202,8 @@ export async function action({ request }) {
       { key: "brand_name", value: brandName },
       { key: "bio", value: bio || "" },
       { key: "category", value: category || "" },
-      { key: "phone", value: phone || "" }
+      { key: "phone", value: phone || "" },
+      { key: "contact_email", value: email }
     ];
 
     if (lookbookFileId) {
